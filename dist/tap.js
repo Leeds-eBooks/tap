@@ -62,7 +62,7 @@
         swipeMaxVertical: 31
     };
 
-    var attachDeviceEvent, init, handlers, deviceEvents,
+    var attachDeviceEvent, init, handlers, deviceEvents, ops=Tap.options,
         coords = {};
 
     attachDeviceEvent = function( eventName ) {
@@ -91,14 +91,9 @@
         },
 
         end: function( e ) {
-            var delay,isntScroll,
-                ops=Tap.options;
+            var delay,isntScroll;
 
             e = utils.getRealEvent( e );
-
-            console.log("delay "+delay);
-            console.log("coords x "+coords.offset[0]);
-            console.log("coords y "+coords.offset[1]);
 
             if (Math.abs(coords.offset[0]) < ops.fingerMaxOffset &&
                 Math.abs(coords.offset[1]) < ops.fingerMaxOffset &&

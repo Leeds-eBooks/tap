@@ -1,6 +1,7 @@
     Tap.options = {
         eventName: 'tap',
-        fingerMaxOffset: 11
+        fingerMaxOffset: 11,
+        swipeMaxOffset: 81
     };
 
     var attachDeviceEvent, init, handlers, deviceEvents,
@@ -20,20 +21,26 @@
 
         move: function( e ) {
             if (!coords['start'] && !coords['move']) return false;
-            
+
             e = utils.getRealEvent( e );
 
             coords.move = [ e.pageX, e.pageY ];
             coords.offset = [
-                Math.abs( coords.move[ 0 ] - coords.start[ 0 ] ),
-                Math.abs( coords.move[ 1 ] - coords.start[ 1 ] )
+                coords.move[ 0 ] - coords.start[ 0 ],
+                coords.move[ 1 ] - coords.start[ 1 ]
             ];
         },
 
         end: function( e ) {
             e = utils.getRealEvent( e );
 
-            if ( coords.offset[ 0 ] < Tap.options.fingerMaxOffset && coords.offset[ 1 ] < Tap.options.fingerMaxOffset && !utils.fireFakeEvent( e, Tap.options.eventName ) ) {
+            if ( Math.abs( coords.offset[ 0 ] ) < Tap.options.fingerMaxOffset && Math.abs( coords.offset[ 1 ] ) < Tap.options.fingerMaxOffset && !utils.fireFakeEvent( e, Tap.options.eventName ) ) {
+                e.preventDefault();
+            }
+            else if ( Tap.options.fingerMaxOffset < coords.offset[ 0 ] && coords.offset[ 0 ] < Tap.options.swipeMaxOffset && !utils.fireFakeEvent( e, 'swiperight' ) ) {
+                e.preventDefault();
+            }
+            else if ( -Tap.options.swipeMaxOffset < coords.offset[ 0 ] && coords.offset[ 0 ] < -Tap.options.swipeMaxOffset && !utils.fireFakeEvent( e, 'swipeleft' ) ) {
                 e.preventDefault();
             }
 

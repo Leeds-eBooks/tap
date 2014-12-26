@@ -20,7 +20,13 @@
     };
 
     utils.getRealEvent = function( e ) {
-        return e.originalEvent && e.originalEvent.touches && e.originalEvent.touches.length ? e.originalEvent.touches[ 0 ] : e;
+        return e.originalEvent ?
+          ( ( e.originalEvent.touches && e.originalEvent.touches.length ) ?
+            e.originalEvent.touches[ 0 ] :
+            e ) :
+          ( e.touches && e.touches.length ) ?
+            e.touches[ 0 ] :
+            e;
     };
 
     var eventMatrix = [{
@@ -52,7 +58,8 @@
     Tap.options = {
         eventName: 'tap',
         fingerMaxOffset: 11,
-        swipeMaxOffset: 81
+        swipeMaxDelay: 501,
+        swipeMaxVertical: 31
     };
 
     var attachDeviceEvent, init, handlers, deviceEvents,
@@ -68,6 +75,7 @@
 
             coords.start = [ e.pageX, e.pageY ];
             coords.offset = [ 0, 0 ];
+            coords.startTime = Date.now();
         },
 
         move: function( e ) {
@@ -83,16 +91,33 @@
         },
 
         end: function( e ) {
+            var delay,isntScroll,
+                ops=Tap.options;
+
             e = utils.getRealEvent( e );
 
-            if ( Math.abs( coords.offset[ 0 ] ) < Tap.options.fingerMaxOffset && Math.abs( coords.offset[ 1 ] ) < Tap.options.fingerMaxOffset && !utils.fireFakeEvent( e, Tap.options.eventName ) ) {
+            console.log("delay "+delay);
+            console.log("coords x "+coords.offset[0]);
+            console.log("coords y "+coords.offset[1]);
+
+            if (Math.abs(coords.offset[0]) < ops.fingerMaxOffset &&
+                Math.abs(coords.offset[1]) < ops.fingerMaxOffset &&
+                !utils.fireFakeEvent(e,ops.eventName)) {
+              e.preventDefault();
+            } else {
+              delay=(Date.now()-coords.startTime) < ops.swipeMaxDelay;
+              isntScroll=Math.abs(coords.offset[1]) < ops.swipeMaxVertical;
+
+              if (delay && isntScroll &&
+                  ops.fingerMaxOffset < coords.offset[0] &&
+                  !utils.fireFakeEvent(e,'swiperight')) {
                 e.preventDefault();
-            }
-            else if ( Tap.options.fingerMaxOffset < coords.offset[ 0 ] && coords.offset[ 0 ] < Tap.options.swipeMaxOffset && !utils.fireFakeEvent( e, 'swiperight' ) ) {
+              }
+              else if (delay && isntScroll &&
+                       coords.offset[0] < 0-ops.fingerMaxOffset &&
+                       !utils.fireFakeEvent(e,'swipeleft')) {
                 e.preventDefault();
-            }
-            else if ( -Tap.options.swipeMaxOffset < coords.offset[ 0 ] && coords.offset[ 0 ] < -Tap.options.swipeMaxOffset && !utils.fireFakeEvent( e, 'swipeleft' ) ) {
-                e.preventDefault();
+              }
             }
 
             coords = {};
